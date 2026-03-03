@@ -100,12 +100,12 @@
       switch(piece) {
         case "P": // White pawn
           if (dx === -1 && dy === 0 && gameState[er][ec] === ".") return true;
-          if (sr === 6 && dx === -2 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (sr === 6 && dx === -2 && dy === 0 && gameState[er][ec] === "." && gameState[sr-1][sc] === ".") return true;
           if (dx === -1 && Math.abs(dy) === 1 && gameState[er][ec] !== "." && gameState[er][ec] === gameState[er][ec].toLowerCase()) return true;
           return false;
         case "p": // Black pawn
           if (dx === 1 && dy === 0 && gameState[er][ec] === ".") return true;
-          if (sr === 1 && dx === 2 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (sr === 1 && dx === 2 && dy === 0 && gameState[er][ec] === "." && gameState[sr+1][sc] === ".") return true;
           if (dx === 1 && Math.abs(dy) === 1 && gameState[er][ec] !== "." && gameState[er][ec] === gameState[er][ec].toUpperCase()) return true;
           return false;
         case "R": case "r": // Rook
