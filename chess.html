@@ -2,80 +2,75 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Chess Game</title>
+  <title>Playable Chess Game</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
   <style>
-    body { display: flex; justify-content: center; margin-top: 20px; }
-    table { border-collapse: collapse; }
-    td {
-      width: 60px; height: 60px;
-      text-align: center; vertical-align: middle;
-      font-size: 40px; font-family: "Segoe UI Symbol";
-      cursor: pointer;
-    }
-    .white { background: #eee; }
-    .black { background: #666; color: white; }
-    .selected { outline: 3px solid red; }
+    body { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+    #status { margin-top: 15px; font-size: 18px; }
   </style>
 </head>
 <body>
-  <table id="chessboard"></table>
+  <h2>Chess Game</h2>
+  <div id="board" style="width: 400px"></div>
+  <div id="status"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
   <script>
-    const board = document.getElementById("chessboard");
-    const pieces = {
-      "R":"♖","N":"♘","B":"♗","Q":"♕","K":"♔","P":"♙",
-      "r":"♜","n":"♞","b":"♝","q":"♛","k":"♚","p":"♟"
-    };
+    var board = null;
+    var game = new Chess();
 
-    let gameState = [
-      ["r","n","b","q","k","b","n","r"],
-      ["p","p","p","p","p","p","p","p"],
-      [".",".",".",".",".",".",".","."],
-      [".",".",".",".",".",".",".","."],
-      [".",".",".",".",".",".",".","."],
-      [".",".",".",".",".",".",".","."],
-      ["P","P","P","P","P","P","P","P"],
-      ["R","N","B","Q","K","B","N","R"]
-    ];
+    function onDragStart (source, piece, position, orientation) {
+      if (game.game_over()) return false;
+      if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+        return false;
+      }
+    }
 
-    let selectedCell = null;
+    function onDrop (source, target) {
+      var move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // always promote to queen
+      });
 
-    function drawBoard() {
-      board.innerHTML = "";
-      for (let i=0; i<8; i++) {
-        const row = board.insertRow();
-        for (let j=0; j<8; j++) {
-          const cell = row.insertCell();
-          cell.className = (i+j)%2===0 ? "white" : "black";
-          cell.dataset.row = i;
-          cell.dataset.col = j;
-          const piece = gameState[i][j];
-          cell.textContent = piece==="." ? "" : pieces[piece];
-          cell.onclick = () => handleClick(cell);
+      if (move === null) return 'snapback';
+      updateStatus();
+    }
+
+    function onSnapEnd () {
+      board.position(game.fen());
+    }
+
+    function updateStatus () {
+      var status = '';
+
+      var moveColor = game.turn() === 'w' ? 'White' : 'Black';
+
+      if (game.in_checkmate()) {
+        status = 'Game over, ' + moveColor + ' is checkmated.';
+      } else if (game.in_draw()) {
+        status = 'Game over, drawn position.';
+      } else {
+        status = moveColor + ' to move';
+        if (game.in_check()) {
+          status += ', ' + moveColor + ' is in check';
         }
       }
+
+      document.getElementById('status').innerHTML = status;
     }
 
-    function handleClick(cell) {
-      if (!selectedCell) {
-        selectedCell = cell;
-        cell.classList.add("selected");
-      } else {
-        const sr = parseInt(selectedCell.dataset.row);
-        const sc = parseInt(selectedCell.dataset.col);
-        const er = parseInt(cell.dataset.row);
-        const ec = parseInt(cell.dataset.col);
+    board = Chessboard('board', {
+      draggable: true,
+      position: 'start',
+      onDragStart: onDragStart,
+      onDrop: onDrop,
+      onSnapEnd: onSnapEnd
+    });
 
-        // Move piece (no rule enforcement yet)
-        gameState[er][ec] = gameState[sr][sc];
-        gameState[sr][sc] = ".";
-        selectedCell.classList.remove("selected");
-        selectedCell = null;
-        drawBoard();
-      }
-    }
-
-    drawBoard();
+    updateStatus();
   </script>
 </body>
 </html>
