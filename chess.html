@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Simple Playable Chess</title>
+  <title>Playable Chess with Rules</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
     table { border-collapse: collapse; }
@@ -68,7 +68,6 @@
       const piece = gameState[r][c];
 
       if (!selectedCell) {
-        // Select only if there's a piece of the current turn
         if (piece === ".") return;
         if (turn === "white" && piece === piece.toLowerCase()) return;
         if (turn === "black" && piece === piece.toUpperCase()) return;
@@ -78,17 +77,63 @@
       } else {
         const sr = parseInt(selectedCell.dataset.row);
         const sc = parseInt(selectedCell.dataset.col);
+        const movingPiece = gameState[sr][sc];
 
-        // Move piece (no full rules yet, just turn-based)
-        gameState[r][c] = gameState[sr][sc];
-        gameState[sr][sc] = ".";
+        if (isValidMove(movingPiece, sr, sc, r, c)) {
+          gameState[r][c] = movingPiece;
+          gameState[sr][sc] = ".";
+          turn = (turn === "white") ? "black" : "white";
+        } else {
+          alert("Invalid move for " + movingPiece);
+        }
+
         selectedCell.classList.remove("selected");
         selectedCell = null;
-
-        // Switch turn
-        turn = (turn === "white") ? "black" : "white";
         drawBoard();
       }
+    }
+
+    function isValidMove(piece, sr, sc, er, ec) {
+      const dx = er - sr;
+      const dy = ec - sc;
+
+      switch(piece) {
+        case "P": // White pawn
+          if (dx === -1 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (sr === 6 && dx === -2 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (dx === -1 && Math.abs(dy) === 1 && gameState[er][ec] !== "." && gameState[er][ec] === gameState[er][ec].toLowerCase()) return true;
+          return false;
+        case "p": // Black pawn
+          if (dx === 1 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (sr === 1 && dx === 2 && dy === 0 && gameState[er][ec] === ".") return true;
+          if (dx === 1 && Math.abs(dy) === 1 && gameState[er][ec] !== "." && gameState[er][ec] === gameState[er][ec].toUpperCase()) return true;
+          return false;
+        case "R": case "r": // Rook
+          if (sr === er || sc === ec) return pathClear(sr, sc, er, ec);
+          return false;
+        case "B": case "b": // Bishop
+          if (Math.abs(dx) === Math.abs(dy)) return pathClear(sr, sc, er, ec);
+          return false;
+        case "Q": case "q": // Queen
+          if (sr === er || sc === ec || Math.abs(dx) === Math.abs(dy)) return pathClear(sr, sc, er, ec);
+          return false;
+        case "K": case "k": // King
+          return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+        case "N": case "n": // Knight
+          return (Math.abs(dx) === 2 && Math.abs(dy) === 1) || (Math.abs(dx) === 1 && Math.abs(dy) === 2);
+      }
+      return false;
+    }
+
+    function pathClear(sr, sc, er, ec) {
+      const dx = Math.sign(er - sr);
+      const dy = Math.sign(ec - sc);
+      let r = sr + dx, c = sc + dy;
+      while (r !== er || c !== ec) {
+        if (gameState[r][c] !== ".") return false;
+        r += dx; c += dy;
+      }
+      return true;
     }
 
     drawBoard();
