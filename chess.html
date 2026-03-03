@@ -80,6 +80,24 @@
         const movingPiece = gameState[sr][sc];
 
         if (isValidMove(movingPiece, sr, sc, r, c)) {
+          const target = gameState[r][c];
+          // Prevent capturing own piece
+          if (target !== ".") {
+            if (turn === "white" && target === target.toUpperCase()) {
+              alert("You cannot capture your own piece!");
+              selectedCell.classList.remove("selected");
+              selectedCell = null;
+              return;
+            }
+            if (turn === "black" && target === target.toLowerCase()) {
+              alert("You cannot capture your own piece!");
+              selectedCell.classList.remove("selected");
+              selectedCell = null;
+              return;
+            }
+          }
+
+          // Move or capture
           gameState[r][c] = movingPiece;
           gameState[sr][sc] = ".";
           turn = (turn === "white") ? "black" : "white";
