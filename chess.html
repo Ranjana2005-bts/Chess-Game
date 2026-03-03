@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Playable Chess with Rules</title>
+  <title>Playable Chess with Rules + Checkmate</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
     table { border-collapse: collapse; }
@@ -43,6 +43,7 @@
 
     let selectedCell = null;
     let turn = "white"; // white moves first
+    let gameOver = false;
 
     function drawBoard() {
       board.innerHTML = "";
@@ -58,11 +59,15 @@
           cell.onclick = () => handleClick(cell);
         }
       }
-      document.getElementById("status").textContent = 
-        (turn === "white" ? "White" : "Black") + " to move";
+      if (!gameOver) {
+        document.getElementById("status").textContent = 
+          (turn === "white" ? "White" : "Black") + " to move";
+      }
     }
 
     function handleClick(cell) {
+      if (gameOver) return;
+
       const r = parseInt(cell.dataset.row);
       const c = parseInt(cell.dataset.col);
       const piece = gameState[r][c];
@@ -101,6 +106,13 @@
           gameState[r][c] = movingPiece;
           gameState[sr][sc] = ".";
           turn = (turn === "white") ? "black" : "white";
+
+          // Check for checkmate
+          if (isCheckmate(turn)) {
+            document.getElementById("status").textContent = 
+              (turn === "white" ? "White" : "Black") + " is checkmated. Game over!";
+            gameOver = true;
+          }
         } else {
           alert("Invalid move for " + movingPiece);
         }
@@ -154,7 +166,38 @@
       return true;
     }
 
-    drawBoard();
-  </script>
-</body>
-</html>
+    function findKing(color) {
+      const kingSymbol = color === "white" ? "K" : "k";
+      for (let i=0; i<8; i++) {
+        for (let j=0; j<8; j++) {
+          if (gameState[i][j] === kingSymbol) return {row: i, col: j};
+        }
+      }
+      return null;
+    }
+
+    function isSquareAttacked(row, col, attackerColor) {
+      for (let i=0; i<8; i++) {
+        for (let j=0; j<8; j++) {
+          const piece = gameState[i][j];
+          if (piece === ".") continue;
+          if (attackerColor === "white" && piece === piece.toUpperCase()) {
+            if (isValidMove(piece, i, j, row, col)) return true;
+          }
+          if (attackerColor === "black" && piece === piece.toLowerCase()) {
+            if (isValidMove(piece, i, j, row, col)) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function isCheckmate(color) {
+      const king = findKing(color);
+      if (!king) return false;
+
+      const opponent = color === "white" ? "black" : "white";
+      if (!isSquareAttacked(king.row, king.col, opponent)) return false;
+
+      // Try all moves for this color
+      for (let sr=0; sr<
